@@ -1,4 +1,4 @@
-import { FC, useRef, useEffect } from 'react';
+import { FC, useRef } from 'react';
 
 import { interactionGroups, RapierRigidBody, RigidBody, BallCollider } from '@react-three/rapier';
 import { Vector3 } from 'three';
@@ -6,9 +6,9 @@ import { Vector3 } from 'three';
 import { useAnimatableVec3 } from '@/hooks/useAnimatableVec3';
 import { useDeviceOrientationDelta } from '@/hooks/useDeviceOrientationDelta';
 import { useMouseMoveDelta } from '@/hooks/useMouseMoveDelta';
-import { useScreenPositionDelta } from '@/hooks/useScreenPositionDelta';
 
-const parallax = 1.5;
+// Оставили parallax 1.5, но если на компе мышка кажется медленной, можешь смело ставить 2.0 или 3.0
+const parallax = 1.5; 
 
 export const Pointer: FC = () => {
   const bodyRef = useRef<RapierRigidBody>(null);
@@ -19,31 +19,14 @@ export const Pointer: FC = () => {
     );
   });
 
+  // Работает только от мышки на компьютере
   useMouseMoveDelta(({ x, y }) => iterateTarget(new Vector3(x, y, 0)));
 
+  // Работает только от наклона (гироскопа) на телефоне
   useDeviceOrientationDelta(({ gamma, beta }) => {
     const strength = 0.05;
     iterateTarget(new Vector3(gamma * strength, beta * strength, 0));
   });
-
-  useScreenPositionDelta(({ x, y }) => {
-    const strength = 3;
-    const vec = new Vector3(-x * strength, -y * strength, 0);
-    iterateTarget(vec);
-  });
-
-  // 🌟 МАГИЯ 1: Решаем проблему "Забытого пальца" на мобилках
-  useEffect(() => {
-    const onTouchEnd = () => {
-      // Как только палец оторвался от экрана, мгновенно отправляем невидимый
-      // поинтер далеко за экран (x: 100, y: 100). Теперь он не будет
-      // стоять как бетонный столб внутри куба и мешать деталям собраться!
-      iterateTarget(new Vector3(100, 100, 0));
-    };
-
-    window.addEventListener('touchend', onTouchEnd);
-    return () => window.removeEventListener('touchend', onTouchEnd);
-  }, [iterateTarget]);
 
   return (
     <RigidBody
@@ -51,13 +34,14 @@ export const Pointer: FC = () => {
       type="kinematicPosition"
       colliders={false} 
       collisionGroups={interactionGroups(2, [1])}
+      ccd={true} 
     >
-      {/* 🌟 МАГИЯ: Делаем шарик абсолютно скользким (friction=0) 
-          и заставляем его выталкивать детали (restitution=0.5) */}
+      {/* 🌟 МАГИЯ: friction={0} убирает трение, а restitution={1.2} заставляет поинтер 
+          моментально и с силой "выплевывать" из себя детальки */}
       <BallCollider 
-        args={[0.2]} 
+        args={[0.25]} 
         friction={0} 
-        restitution={0.5} 
+        restitution={1.2} 
       />
 
       <group rotation={[Math.PI / 6, -Math.PI / 4, 0]}>
