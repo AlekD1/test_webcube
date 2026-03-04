@@ -1,4 +1,4 @@
-import { FC, PropsWithChildren, useMemo, useRef, useState } from 'react';
+import { FC, PropsWithChildren, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { interactionGroups, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { Vector3 } from 'three';
@@ -6,9 +6,6 @@ import { Vector3 } from 'three';
 export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
   const ref = useRef<RapierRigidBody>(null);
   const initialPos = useRef<Vector3 | null>(null);
-  
-  // Состояние: дома деталь или нет
-  const [isHome, setIsHome] = useState(true);
 
   const vec = useMemo(() => new Vector3(), []);
 
@@ -17,6 +14,7 @@ export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
 
     if (!body) return;
 
+    // 1. Запоминаем идеальную точку (свой дом) при старте
     if (!initialPos.current) {
       initialPos.current = new Vector3().copy(body.translation());
     }
@@ -24,24 +22,30 @@ export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
     const currentPos = body.translation();
     const distance = initialPos.current.distanceTo(currentPos);
 
-    // --- ЛОГИКА ВОЗВРАТА И ДИНАМИЧЕСКИХ КОЛЛИЗИЙ ---
-    // Увеличили порог до 0.05, чтобы избежать "зависания" в воздухе
-    if (distance > 0.05) {
-      if (isHome) setIsHome(false); // Деталь вылетела - делаем призраком
+    // Достаем саму физическую оболочку (коллайдер) кубика напрямую
+    const collider = body.collider(0);
 
-      // Тянем домой. Дал чуть больше силы (0.8), чтобы летела бодрее
+    if (distance > 0.05) {
+      // 🚀 МЫ В НЕВЕСОМОСТИ (отошли от точки)
+      
+      // Делаем кубик призраком: он не видит никого (маска [0])
+      if (collider) collider.setCollisionGroups(interactionGroups(3, [0]));
+
+      // Плавно тянем в свою точку
       body.applyImpulse(
         vec
           .copy(initialPos.current)
           .sub(currentPos)
-          .multiplyScalar(0.8),
+          .multiplyScalar(0.7),
         true,
       );
     } else {
-      if (!isHome) setIsHome(true); // Деталь дома - делаем твердой
+      // 🏠 МЫ ДОМА (пришли в точку)
+      
+      // Включаем столкновения: теперь мы видим поинтер (группа [2])
+      if (collider) collider.setCollisionGroups(interactionGroups(1, [2]));
 
-      // Как только деталь вошла в зону 0.05 — ЖЕСТКО защелкиваем на место.
-      // Это убивает эффект "нехватки бензина", деталь моментально встает в паз.
+      // Жестко прибиваем гвоздями к идеальной точке, чтобы не было микро-тряски
       body.setTranslation(initialPos.current, true);
       body.setLinvel({ x: 0, y: 0, z: 0 }, true);
       body.setAngvel({ x: 0, y: 0, z: 0 }, true);
@@ -51,8 +55,8 @@ export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
   return (
     <RigidBody
       ref={ref}
-      // Магия: если дома -> бьется об поинтер (1, [2]). Если в полете -> проходит сквозь всё (3, [0])
-      collisionGroups={isHome ? interactionGroups(1, [2]) : interactionGroups(3, [0])}
+      // 👇 ВЕРНУЛИ ЭТУ СТРОЧКУ, чтобы при спавне они не расталкивали друг друга
+      collisionGroups={interactionGroups(1, [2])} 
       lockRotations
       linearDamping={2}
       angularDamping={2}
