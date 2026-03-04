@@ -1,172 +1,89 @@
 import { useGLTF } from '@react-three/drei';
+import { useMemo, useEffect } from 'react';
+import { MeshPhysicalMaterial, DoubleSide } from 'three';
 
 import { Modify } from './Modify';
 
 export const Model = () => {
-  const gltf = useGLTF('/models/model.glb');
+  const gltf = useGLTF('/models/Cube.glb');
   const nodes = gltf.nodes as any;
 
+  // Создаем массив кубов
+  const items = useMemo(() => [
+    nodes.Cube_1, nodes.Cube_2, nodes.Cube_3,
+    nodes.Cube_4, nodes.Cube_5, nodes.Cube_6,
+    nodes.Cube_7, nodes.Cube_8, nodes.Cube_9,
+  ], [nodes]);
+
+  // Генерируем материал "Сочного матового пластика"
+ // Генерируем материал "Сочного матового пластика"
+  // Генерируем материал "Прозрачного мармелада"
+  const denseGlassMaterials = useMemo(() => {
+    return items.map((node) => {
+      return new MeshPhysicalMaterial({
+        color: node.material.color, 
+        roughness: 0.3,             // Сделал чуть прозрачнее (было 0.4), чтобы лучше видеть нутро
+        metalness: 0.0,             
+        clearcoat: 0.2,             
+        clearcoatRoughness: 0.7,    
+        
+        emissive: node.material.color, 
+        emissiveIntensity: 0.1,     // Чуть убавил свечение, чтобы оно не перебивало прозрачность
+
+        // --- МАГИЯ ВНУТРЕННОСТЕЙ ---
+        transmission: 0.9,          // Пропускаем максимум света внутрь (было 0.6)
+        thickness: 0.3,             // Делаем объем более легким, "мармеладным" (было 1.0)
+        ior: 1.5,                   // Убираем сильное преломление, чтобы внутренности не превращались в кашу
+        transparent: true,          
+        depthWrite: true,           
+        side: DoubleSide,           // 🌟 ГЛАВНАЯ МАГИЯ: Заставляем движок рисовать внутренние стенки кубиков!
+      });
+    });
+  }, [items]);
+
+  // Защищаем надписи (Plane), чтобы они не перекрывались пластиком
+  useEffect(() => {
+    items.forEach(node => {
+      node.children?.forEach((child: any) => {
+        if (child.material) {
+          child.material.transparent = true;
+          child.material.depthWrite = false; // Надпись не "проваливается" в глубину
+        }
+      });
+    });
+  }, [items]);
+
   return (
-    <Modify>
-      <mesh
-        geometry={nodes.Icosphere001.geometry}
-        material={nodes.Icosphere001.material}
-      />
+    <group rotation={[Math.PI / 6, -Math.PI / 4, 0]}>
+      <Modify>
+        {items.map((node, i) => (
+          <group
+            key={i}
+            position={node.position}
+            rotation={node.rotation}
+            scale={node.scale}
+          >
+            {/* 1. ОСНОВНОЙ КУБ (сочный матовый пластик) */}
+            <mesh
+              geometry={node.geometry}
+              material={denseGlassMaterials[i]}
+            />
 
-      <mesh
-        geometry={nodes.Icosphere003.geometry}
-        material={nodes.Icosphere003.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere004.geometry}
-        material={nodes.Icosphere004.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere007.geometry}
-        material={nodes.Icosphere007.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere008.geometry}
-        material={nodes.Icosphere008.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere009.geometry}
-        material={nodes.Icosphere009.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere010.geometry}
-        material={nodes.Icosphere010.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere012.geometry}
-        material={nodes.Icosphere012.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere014.geometry}
-        material={nodes.Icosphere014.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere015.geometry}
-        material={nodes.Icosphere015.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere017.geometry}
-        material={nodes.Icosphere017.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere018.geometry}
-        material={nodes.Icosphere018.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere020.geometry}
-        material={nodes.Icosphere020.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere023.geometry}
-        material={nodes.Icosphere023.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere024.geometry}
-        material={nodes.Icosphere024.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere025.geometry}
-        material={nodes.Icosphere025.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere026.geometry}
-        material={nodes.Icosphere026.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere028.geometry}
-        material={nodes.Icosphere028.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere029.geometry}
-        material={nodes.Icosphere029.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere030.geometry}
-        material={nodes.Icosphere030.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere002.geometry}
-        material={nodes.Icosphere002.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere005.geometry}
-        material={nodes.Icosphere005.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere006.geometry}
-        material={nodes.Icosphere006.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere011.geometry}
-        material={nodes.Icosphere011.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere013.geometry}
-        material={nodes.Icosphere013.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere016.geometry}
-        material={nodes.Icosphere016.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere019.geometry}
-        material={nodes.Icosphere019.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere021.geometry}
-        material={nodes.Icosphere021.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere022.geometry}
-        material={nodes.Icosphere022.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere027.geometry}
-        material={nodes.Icosphere027.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere031.geometry}
-        material={nodes.Icosphere031.material}
-      />
-
-      <mesh
-        geometry={nodes.Icosphere032.geometry}
-        material={nodes.Icosphere032.material}
-      />
-    </Modify>
+            {/* 2. ЛОГОТИПЫ И ТЕКСТ */}
+            {node.children?.map((child: any) => (
+              <mesh
+                key={child.uuid}
+                geometry={child.geometry}
+                material={child.material}
+                position={child.position}
+                rotation={child.rotation}
+                scale={child.scale}
+                renderOrder={1} // Рисуем надписи самым последним слоем (поверх всего)
+              />
+            ))}
+          </group>
+        ))}
+      </Modify>
+    </group>
   );
 };

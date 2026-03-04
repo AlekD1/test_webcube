@@ -1,6 +1,4 @@
-import { cloneElement, FC, ReactElement } from 'react';
-
-import { material } from './material';
+import { FC, ReactElement } from 'react';
 import { ModelRigidBody } from './RigidBody';
 
 interface IProps {
@@ -10,6 +8,6 @@ interface IProps {
 export const Modify: FC<IProps> = ({ children }) =>
   children.map((child, i) => (
     <ModelRigidBody key={child.key || i}>
-      {cloneElement(child, { material: material } as any)}
+      {child}
     </ModelRigidBody>
   ));

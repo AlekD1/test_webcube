@@ -1,6 +1,6 @@
 import { FC, useRef } from 'react';
 
-import { RapierRigidBody, RigidBody } from '@react-three/rapier';
+import { interactionGroups, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { Vector3 } from 'three';
 
 import { useAnimatableVec3 } from '@/hooks/useAnimatableVec3';
@@ -35,16 +35,21 @@ export const Pointer: FC = () => {
   });
 
   return (
-    <RigidBody ref={bodyRef} type="kinematicPosition">
-      <group>
+    <RigidBody
+      ref={bodyRef}
+      type="kinematicPosition"
+      colliders="cuboid"
+      collisionGroups={interactionGroups(2, [1])}
+    >
+      <group rotation={[Math.PI / 6, -Math.PI / 4, 0]}>
         <mesh>
-          <sphereGeometry args={[0.75, 32, 32]} />
+          <boxGeometry args={[0.6, 0.6, 0.6]} />
 
           <meshBasicMaterial transparent opacity={0} />
         </mesh>
 
         <mesh>
-          <sphereGeometry args={[0.5, 32, 32]} />
+          <boxGeometry args={[0.6, 0.6, 0.6]} />
 
           <meshStandardMaterial
             color={0x999999}
