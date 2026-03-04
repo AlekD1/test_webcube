@@ -46,7 +46,7 @@ export const Pointer: FC = () => {
           3. solverGroups — заставляем движок приоритетнее обрабатывать эти столкновения.
       */}
       <BallCollider 
-        args={[0.35]} 
+        args={[0.25]} 
         friction={0} 
         restitution={1.6} 
       />
