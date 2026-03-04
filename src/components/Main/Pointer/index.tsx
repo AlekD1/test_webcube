@@ -1,6 +1,5 @@
-import { FC, useRef } from 'react';
+import { FC, useRef, useEffect } from 'react';
 
-// 🌟 МАГИЯ #1: Импортируем ручной коллайдер BallCollider
 import { interactionGroups, RapierRigidBody, RigidBody, BallCollider } from '@react-three/rapier';
 import { Vector3 } from 'three';
 
@@ -24,33 +23,45 @@ export const Pointer: FC = () => {
 
   useDeviceOrientationDelta(({ gamma, beta }) => {
     const strength = 0.05;
-
     iterateTarget(new Vector3(gamma * strength, beta * strength, 0));
   });
 
   useScreenPositionDelta(({ x, y }) => {
     const strength = 3;
     const vec = new Vector3(-x * strength, -y * strength, 0);
-
     iterateTarget(vec);
   });
+
+  // 🌟 МАГИЯ 1: Решаем проблему "Забытого пальца" на мобилках
+  useEffect(() => {
+    const onTouchEnd = () => {
+      // Как только палец оторвался от экрана, мгновенно отправляем невидимый
+      // поинтер далеко за экран (x: 100, y: 100). Теперь он не будет
+      // стоять как бетонный столб внутри куба и мешать деталям собраться!
+      iterateTarget(new Vector3(100, 100, 0));
+    };
+
+    window.addEventListener('touchend', onTouchEnd);
+    return () => window.removeEventListener('touchend', onTouchEnd);
+  }, [iterateTarget]);
 
   return (
     <RigidBody
       ref={bodyRef}
       type="kinematicPosition"
-      // 🌟 МАГИЯ #2: Выключаем автоматические коллайдеры (colliders={false})
       colliders={false} 
       collisionGroups={interactionGroups(2, [1])}
     >
-      {/* 🌟 МАГИЯ #3: Добавляем физический коллайдер ВРУЧНУЮ.
-          args={[0.15]} — это радиус шара. Он маленький и скользкий,
-          детали будут легко огибать его. */}
-      <BallCollider args={[0.15]} />
+      {/* 🌟 МАГИЯ: Делаем шарик абсолютно скользким (friction=0) 
+          и заставляем его выталкивать детали (restitution=0.5) */}
+      <BallCollider 
+        args={[0.2]} 
+        friction={0} 
+        restitution={0.5} 
+      />
 
       <group rotation={[Math.PI / 6, -Math.PI / 4, 0]}>
         <mesh>
-          {/* 🌟 МАГИЯ #4: Визуальные кубы возвращаем к БОЛЬШОМУ размеру (0.6) */}
           <boxGeometry args={[0.6, 0.6, 0.6]} />
           <meshBasicMaterial transparent opacity={0} />
         </mesh>
