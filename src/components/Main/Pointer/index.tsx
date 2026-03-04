@@ -1,6 +1,7 @@
 import { FC, useRef } from 'react';
 
-import { interactionGroups, RapierRigidBody, RigidBody } from '@react-three/rapier';
+// 🌟 МАГИЯ #1: Импортируем ручной коллайдер BallCollider
+import { interactionGroups, RapierRigidBody, RigidBody, BallCollider } from '@react-three/rapier';
 import { Vector3 } from 'three';
 
 import { useAnimatableVec3 } from '@/hooks/useAnimatableVec3';
@@ -38,19 +39,24 @@ export const Pointer: FC = () => {
     <RigidBody
       ref={bodyRef}
       type="kinematicPosition"
-      colliders="cuboid"
+      // 🌟 МАГИЯ #2: Выключаем автоматические коллайдеры (colliders={false})
+      colliders={false} 
       collisionGroups={interactionGroups(2, [1])}
     >
+      {/* 🌟 МАГИЯ #3: Добавляем физический коллайдер ВРУЧНУЮ.
+          args={[0.15]} — это радиус шара. Он маленький и скользкий,
+          детали будут легко огибать его. */}
+      <BallCollider args={[0.15]} />
+
       <group rotation={[Math.PI / 6, -Math.PI / 4, 0]}>
         <mesh>
+          {/* 🌟 МАГИЯ #4: Визуальные кубы возвращаем к БОЛЬШОМУ размеру (0.6) */}
           <boxGeometry args={[0.6, 0.6, 0.6]} />
-
           <meshBasicMaterial transparent opacity={0} />
         </mesh>
 
         <mesh>
           <boxGeometry args={[0.6, 0.6, 0.6]} />
-
           <meshStandardMaterial
             color={0x999999}
             emissive={0x555555}
