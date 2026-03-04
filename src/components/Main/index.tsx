@@ -20,7 +20,7 @@ export const Main: FC = () => {
       <DeviceOrientationButton />
 
       <Canvas
-        dpr={[0.8, 3]}
+        dpr={[1, 1.5]}
         gl={async ({ canvas }) => {
           const renderer = new WebGPURenderer({
             canvas: canvas as any,
