@@ -32,8 +32,8 @@ export const Model = () => {
 
         // --- МАГИЯ ВНУТРЕННОСТЕЙ ---
         transmission: 0.9,          // Пропускаем максимум света внутрь (было 0.6)
-        thickness: 0.3,             // Делаем объем более легким, "мармеладным" (было 1.0)
-        ior: 1.5,                   // Убираем сильное преломление, чтобы внутренности не превращались в кашу
+        thickness: 0.2,             // Делаем объем более легким, "мармеладным" (было 1.0)
+        ior: 1.45,                   // Убираем сильное преломление, чтобы внутренности не превращались в кашу
         transparent: true,          
         depthWrite: true,           
         side: DoubleSide,           // 🌟 ГЛАВНАЯ МАГИЯ: Заставляем движок рисовать внутренние стенки кубиков!
@@ -41,13 +41,23 @@ export const Model = () => {
     });
   }, [items]);
 
-  // Защищаем надписи (Plane), чтобы они не перекрывались пластиком
+ // Защищаем надписи (Plane) от ряби, перекрытия и видимых границ
   useEffect(() => {
     items.forEach(node => {
       node.children?.forEach((child: any) => {
         if (child.material) {
           child.material.transparent = true;
-          child.material.depthWrite = false; // Надпись не "проваливается" в глубину
+          child.material.depthWrite = false; 
+          
+          // --- ЛЕКАРСТВО ОТ РЯБИ (Z-fighting) ---
+          child.material.polygonOffset = true;
+          child.material.polygonOffsetFactor = -1;
+          child.material.polygonOffsetUnits = -1;
+
+          // --- АЛЬФА-КЛИППИНГ (Срезаем границы Plane) ---
+          // Если прозрачность пикселя меньше 50% (0.5), он вообще не рендерится.
+          // Это уберет видимые края квадрата и оставит только четкий текст!
+          child.material.alphaTest = 0.5; 
         }
       });
     });

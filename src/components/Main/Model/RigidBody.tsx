@@ -1,5 +1,4 @@
 import { FC, PropsWithChildren, useMemo, useRef } from 'react';
-
 import { useFrame } from '@react-three/fiber';
 import { interactionGroups, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { Vector3 } from 'three';
@@ -15,28 +14,41 @@ export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
 
     if (!body) return;
 
-    if (!initialPos.current)
+    if (!initialPos.current) {
       initialPos.current = new Vector3().copy(body.translation());
+    }
 
-    body.applyImpulse(
-      vec
-        .copy(initialPos.current)
-        .sub(body.translation())
-        .multiplyScalar(0.7),
-      true,
-    );
+    const currentPos = body.translation();
+    const distance = initialPos.current.distanceTo(currentPos);
+
+    if (distance > 0.01) {
+      // Твой оригинальный импульс (работает супер)
+      body.applyImpulse(
+        vec
+          .copy(initialPos.current)
+          .sub(currentPos)
+          .multiplyScalar(0.7),
+        true,
+      );
+    } else if (distance > 0) {
+      // МАГИЯ АНТИ-ЗИГЗАГА: 
+      // Как только деталь почти на месте, жестко ставим её в идеальную стартовую точку
+      // и убиваем остаточную скорость (мондраж), чтобы она замерла намертво.
+      body.setTranslation(initialPos.current, true);
+      body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    }
   });
 
   return (
     <RigidBody
       ref={ref}
-      collisionGroups={interactionGroups(1, [2])} // Кубики сталкиваются только с курсором (2), чтобы не рассыпаться из-за физических отступов коллайдеров
+      collisionGroups={interactionGroups(1, [2])}
       lockRotations
       linearDamping={2}
       angularDamping={2}
       friction={1}
-      colliders="cuboid" // ИДЕАЛЬНЫЙ КОЛЛАЙДЕР: для кубиков 'cuboid' создает самую ровную сетку без щелей (в отличие от hull)
-      restitution={0} // Нулевая упругость, чтобы они не отскакивали друг от друга
+      colliders="cuboid"
+      restitution={0}
     >
       {children}
     </RigidBody>
