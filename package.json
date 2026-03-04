@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run lint && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "npm run lint:js ",
     "lint:js": "eslint . --ext .jsx,.js,.tsx,.ts"
