@@ -7,7 +7,7 @@ export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
   const ref = useRef<RapierRigidBody>(null);
   const initialPos = useRef<Vector3 | null>(null);
   
-  // 🌟 МАГИЯ REACT: Создаем состояние "дома ли деталь?"
+  // Состояние: дома деталь или нет
   const [isHome, setIsHome] = useState(true);
 
   const vec = useMemo(() => new Vector3(), []);
@@ -24,34 +24,34 @@ export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
     const currentPos = body.translation();
     const distance = initialPos.current.distanceTo(currentPos);
 
-    // --- ПЕРЕКЛЮЧАТЕЛЬ "НЕВЕСОМОСТИ" ---
-    // Обновляем состояние только в момент пересечения границы (чтобы не просаживать FPS)
-    if (distance > 0.05 && isHome) {
-      setIsHome(false); // Вылетела! Становится призраком
-    } else if (distance <= 0.05 && !isHome) {
-      setIsHome(true);  // Вернулась! Снова становится твердой
-    }
+    // --- ЛОГИКА ВОЗВРАТА И ДИНАМИЧЕСКИХ КОЛЛИЗИЙ ---
+    // Увеличили порог до 0.05, чтобы избежать "зависания" в воздухе
+    if (distance > 0.05) {
+      if (isHome) setIsHome(false); // Деталь вылетела - делаем призраком
 
-    if (distance > 0.01) {
-      // Твой оригинальный импульс
+      // Тянем домой. Дал чуть больше силы (0.8), чтобы летела бодрее
       body.applyImpulse(
         vec
           .copy(initialPos.current)
           .sub(currentPos)
-          .multiplyScalar(0.7),
+          .multiplyScalar(0.8),
         true,
       );
-    } else if (distance > 0) {
-      // Жесткая фиксация дома
+    } else {
+      if (!isHome) setIsHome(true); // Деталь дома - делаем твердой
+
+      // Как только деталь вошла в зону 0.05 — ЖЕСТКО защелкиваем на место.
+      // Это убивает эффект "нехватки бензина", деталь моментально встает в паз.
       body.setTranslation(initialPos.current, true);
       body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      body.setAngvel({ x: 0, y: 0, z: 0 }, true);
     }
   });
 
   return (
     <RigidBody
       ref={ref}
-      // 🌟 МАГИЯ REACT: Передаем нужную группу напрямую в компонент
+      // Магия: если дома -> бьется об поинтер (1, [2]). Если в полете -> проходит сквозь всё (3, [0])
       collisionGroups={isHome ? interactionGroups(1, [2]) : interactionGroups(3, [0])}
       lockRotations
       linearDamping={2}
