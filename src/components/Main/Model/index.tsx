@@ -1,6 +1,6 @@
 import { useGLTF } from '@react-three/drei';
 import { useMemo, useEffect } from 'react';
-import { MeshPhysicalMaterial, DoubleSide } from 'three';
+import { MeshPhysicalMaterial, DoubleSide, Color } from 'three'; // 🌟 Добавил импорт Color
 
 import { Modify } from './Modify';
 
@@ -15,8 +15,6 @@ export const Model = () => {
     nodes.Cube_7, nodes.Cube_8, nodes.Cube_9,
   ], [nodes]);
 
-  // Генерируем материал "Сочного матового пластика"
- // Генерируем материал "Сочного матового пластика"
   // Генерируем материал "Прозрачного мармелада"
   const denseGlassMaterials = useMemo(() => {
     return items.map((node) => {
@@ -33,7 +31,7 @@ export const Model = () => {
         // --- МАГИЯ ВНУТРЕННОСТЕЙ ---
         transmission: 0.9,          // Пропускаем максимум света внутрь (было 0.6)
         thickness: 0.2,             // Делаем объем более легким, "мармеладным" (было 1.0)
-        ior: 1.45,                   // Убираем сильное преломление, чтобы внутренности не превращались в кашу
+        ior: 1.45,                  // Убираем сильное преломление, чтобы внутренности не превращались в кашу
         transparent: true,          
         depthWrite: true,           
         side: DoubleSide,           // 🌟 ГЛАВНАЯ МАГИЯ: Заставляем движок рисовать внутренние стенки кубиков!
@@ -41,7 +39,7 @@ export const Model = () => {
     });
   }, [items]);
 
- // Защищаем надписи (Plane) от ряби, перекрытия и видимых границ
+  // Защищаем надписи (Plane) от ряби, перекрытия и видимых границ
   useEffect(() => {
     items.forEach(node => {
       node.children?.forEach((child: any) => {
@@ -55,9 +53,12 @@ export const Model = () => {
           child.material.polygonOffsetUnits = -1;
 
           // --- АЛЬФА-КЛИППИНГ (Срезаем границы Plane) ---
-          // Если прозрачность пикселя меньше 50% (0.5), он вообще не рендерится.
-          // Это уберет видимые края квадрата и оставит только четкий текст!
           child.material.alphaTest = 0.5; 
+
+          // --- 🌟 ЛЕКАРСТВО ОТ ЧЕРНЫХ ПЛАШЕК НА МОБИЛКАХ 🌟 ---
+          child.material.side = DoubleSide; // Делаем двусторонним
+          child.material.color = new Color(0xffffff); // Сбрасываем фон в белый (чтобы не примешивался черный)
+          child.material.needsUpdate = true; // Жесткий приказ видеокарте пересобрать шейдер
         }
       });
     });
