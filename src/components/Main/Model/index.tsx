@@ -1,6 +1,7 @@
 import { useGLTF } from '@react-three/drei';
 import { useMemo, useEffect } from 'react';
-import { MeshPhysicalMaterial, DoubleSide, Color } from 'three'; // 🌟 Добавил импорт Color
+// 🌟 Добавил LinearFilter и ClampToEdgeWrapping для фикса Huawei
+import { MeshPhysicalMaterial, DoubleSide, Color, LinearFilter, ClampToEdgeWrapping } from 'three'; 
 
 import { Modify } from './Modify';
 
@@ -58,6 +59,20 @@ export const Model = () => {
           // --- 🌟 ЛЕКАРСТВО ОТ ЧЕРНЫХ ПЛАШЕК НА МОБИЛКАХ 🌟 ---
           child.material.side = DoubleSide; // Делаем двусторонним
           child.material.color = new Color(0xffffff); // Сбрасываем фон в белый (чтобы не примешивался черный)
+
+          // 🌟 СПЕЦ-ЛЕКАРСТВО ДЛЯ HUAWEI (ВИДЕОКАРТ MALI) 🌟
+          if (child.material.map) {
+            // Выключаем генерацию мипмапов (главная причина черных квадратов)
+            child.material.map.generateMipmaps = false;
+            // Ставим базовую линейную фильтрацию
+            child.material.map.minFilter = LinearFilter;
+            // Запрещаем зацикливание текстуры
+            child.material.map.wrapS = ClampToEdgeWrapping;
+            child.material.map.wrapT = ClampToEdgeWrapping;
+            // Обновляем текстуру
+            child.material.map.needsUpdate = true;
+          }
+
           child.material.needsUpdate = true; // Жесткий приказ видеокарте пересобрать шейдер
         }
       });
