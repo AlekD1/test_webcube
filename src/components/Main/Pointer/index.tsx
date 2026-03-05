@@ -15,7 +15,7 @@ export const Pointer: FC = () => {
 
   useMouseMoveDelta(({ x, y }) => iterateTarget(new Vector3(x, y, 0)));
   useDeviceOrientationDelta(({ gamma, beta }) => {
-    const strength = 0.05;
+    const strength = 0.02;
     iterateTarget(new Vector3(gamma * strength, beta * strength, 0));
   });
 
