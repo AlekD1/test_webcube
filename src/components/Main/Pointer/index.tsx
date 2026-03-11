@@ -28,7 +28,7 @@ export const Pointer: FC = () => {
       ccd={true}
     >
       {/* Возвращаем спокойные настройки: радиус 0.25 и прыгучесть 0.2 */}
-      <BallCollider args={[0.25]} friction={0} restitution={0.2} />
+      <BallCollider args={[0.25]} friction={0} restitution={0.4} />
 
       <group rotation={[Math.PI / 6, -Math.PI / 4, 0]}>
         <mesh>

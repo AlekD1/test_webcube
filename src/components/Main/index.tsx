@@ -2,7 +2,6 @@
 
 import { FC, useState } from 'react';
 
-import { Stats } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { WebGPURenderer } from 'three/webgpu';
 
@@ -39,8 +38,6 @@ export const Main: FC = () => {
         camera={{ fov: 60 }}
         frameloop={frameloop}
       >
-        <Stats />
-
         <WebGPUPostProcessing />
 
         <Scene />
@@ -48,3 +45,4 @@ export const Main: FC = () => {
     </div>
   );
 };
+

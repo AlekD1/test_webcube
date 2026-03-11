@@ -5,7 +5,6 @@ import { Manrope } from 'next/font/google';
 import type { Metadata } from 'next';
 
 import './globals.css';
-import { Github } from '@/components/Github';
 
 const manrope = Manrope({
   subsets: ['latin'],
@@ -17,12 +16,9 @@ export const metadata: Metadata = {
 
 const RootLayout: FC<PropsWithChildren> = ({ children }) => (
   <html lang="en" className={manrope.className}>
-    <body>
-      {children}
-
-      <Github />
-    </body>
+    <body>{children}</body>
   </html>
 );
 
 export default RootLayout;
+
