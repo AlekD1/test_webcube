@@ -12,7 +12,8 @@ import { useScreenPositionDelta } from '@/hooks/useScreenPositionDelta';
 import { Model } from './Model';
 import { Pointer } from './Pointer';
 
-const rotation = Math.PI * 0.6;
+// 🌟 ПРАВКА 5: Увеличиваем максимальный угол поворота (амплитуду). Было 0.6, стало 0.9.
+const rotation = Math.PI * 0.9;
 
 export const Scene: FC = () => {
   const groupRef = useRef<Group>(null);
@@ -23,7 +24,8 @@ export const Scene: FC = () => {
 
       group.position.set(x, -y, 0);
     },
-    0.02,
+    // 🌟 ПРАВКА 4: Делаем движение тяжелым и плавным. Было 0.02, уменьшили на 40% -> 0.012
+    0.012,
     0.1,
   );
 
@@ -33,7 +35,8 @@ export const Scene: FC = () => {
 
       group.rotation.set(y * rotation, x * rotation, z * rotation);
     },
-    0.02,
+    // 🌟 ПРАВКА 4: Делаем вращение тяжелым и плавным. Было 0.02, уменьшили на 40% -> 0.012
+    0.012,
     0.1,
   );
 

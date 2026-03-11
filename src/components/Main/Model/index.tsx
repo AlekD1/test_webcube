@@ -1,6 +1,5 @@
 import { useGLTF } from '@react-three/drei';
 import { useMemo, useEffect } from 'react';
-// 🌟 Добавил LinearFilter и ClampToEdgeWrapping для фикса Huawei
 import { MeshPhysicalMaterial, DoubleSide, Color, LinearFilter, ClampToEdgeWrapping } from 'three'; 
 
 import { Modify } from './Modify';
@@ -16,31 +15,39 @@ export const Model = () => {
     nodes.Cube_7, nodes.Cube_8, nodes.Cube_9,
   ], [nodes]);
 
-  // Генерируем материал "Прозрачного мармелада"
+  // Генерируем материал "Литое акриловое стекло с яркими гранями"
   const denseGlassMaterials = useMemo(() => {
     return items.map((node) => {
-      return new MeshPhysicalMaterial({
-        color: node.material.color, 
-        roughness: 0.3,             // Сделал чуть прозрачнее (было 0.4), чтобы лучше видеть нутро
-        metalness: 0.0,             
-        clearcoat: 0.2,             
-        clearcoatRoughness: 0.7,    
-        
-        emissive: node.material.color, 
-        emissiveIntensity: 0.1,     // Чуть убавил свечение, чтобы оно не перебивало прозрачность
+      // Базовый цвет чуть осветляем для молочности
+      const baseColor = node.material.color.clone().lerp(new Color(0xffffff), 0.15);
 
-        // --- МАГИЯ ВНУТРЕННОСТЕЙ ---
-        transmission: 0.9,          // Пропускаем максимум света внутрь (было 0.6)
-        thickness: 0.2,             // Делаем объем более легким, "мармеладным" (было 1.0)
-        ior: 1.45,                  // Убираем сильное преломление, чтобы внутренности не превращались в кашу
+      return new MeshPhysicalMaterial({
+        color: baseColor, 
+        roughness: 0.6,             // Снизили шероховатость, чтобы ребра ловили свет лучше
+        metalness: 0.0,             // Убрали металл, он "грязнит" стекло
+        
+        // --- МАГИЯ ГРАНЕЙ (Яркие ребра) ---
+        clearcoat: 0.01,             // Накидываем жесткий глянец поверх куба
+        clearcoatRoughness: 0.1,    // Глянец должен быть острым, чтобы очертить ребра
+        ior: 1.2,                  // Индекс преломления стекла (создает свечение по краям)
+
+        emissive: node.material.color, 
+        emissiveIntensity: 0.15,    
+
+        // --- МАГИЯ ОБЪЕМА (Густота цвета) ---
+        transmission: 0.8,          // Полное пропускание света
+        thickness: 0.3,             // Виртуальная толщина куска (было 0.3, делаем массивнее!)
+        attenuationColor: node.material.color, // Каким цветом наливается объем внутри
+        attenuationDistance: 0.8,   // Как быстро сгущается цвет. Чем меньше цифра, тем плотнее края
+
         transparent: true,          
         depthWrite: true,           
-        side: DoubleSide,           // 🌟 ГЛАВНАЯ МАГИЯ: Заставляем движок рисовать внутренние стенки кубиков!
+        side: DoubleSide,           
       });
     });
   }, [items]);
 
-  // Защищаем надписи (Plane) от ряби, перекрытия и видимых границ
+  // Защищаем надписи (Plane)
   useEffect(() => {
     items.forEach(node => {
       node.children?.forEach((child: any) => {
@@ -48,32 +55,24 @@ export const Model = () => {
           child.material.transparent = true;
           child.material.depthWrite = false; 
           
-          // --- ЛЕКАРСТВО ОТ РЯБИ (Z-fighting) ---
           child.material.polygonOffset = true;
           child.material.polygonOffsetFactor = -1;
           child.material.polygonOffsetUnits = -1;
 
-          // --- АЛЬФА-КЛИППИНГ (Срезаем границы Plane) ---
           child.material.alphaTest = 0.5; 
 
-          // --- 🌟 ЛЕКАРСТВО ОТ ЧЕРНЫХ ПЛАШЕК НА МОБИЛКАХ 🌟 ---
-          child.material.side = DoubleSide; // Делаем двусторонним
-          child.material.color = new Color(0xffffff); // Сбрасываем фон в белый (чтобы не примешивался черный)
+          child.material.side = DoubleSide; 
+          child.material.color = new Color(0xffffff); 
 
-          // 🌟 СПЕЦ-ЛЕКАРСТВО ДЛЯ HUAWEI (ВИДЕОКАРТ MALI) 🌟
           if (child.material.map) {
-            // Выключаем генерацию мипмапов (главная причина черных квадратов)
             child.material.map.generateMipmaps = false;
-            // Ставим базовую линейную фильтрацию
             child.material.map.minFilter = LinearFilter;
-            // Запрещаем зацикливание текстуры
             child.material.map.wrapS = ClampToEdgeWrapping;
             child.material.map.wrapT = ClampToEdgeWrapping;
-            // Обновляем текстуру
             child.material.map.needsUpdate = true;
           }
 
-          child.material.needsUpdate = true; // Жесткий приказ видеокарте пересобрать шейдер
+          child.material.needsUpdate = true; 
         }
       });
     });
@@ -89,7 +88,7 @@ export const Model = () => {
             rotation={node.rotation}
             scale={node.scale}
           >
-            {/* 1. ОСНОВНОЙ КУБ (сочный матовый пластик) */}
+            {/* 1. ОСНОВНОЙ КУБ */}
             <mesh
               geometry={node.geometry}
               material={denseGlassMaterials[i]}
@@ -104,7 +103,7 @@ export const Model = () => {
                 position={child.position}
                 rotation={child.rotation}
                 scale={child.scale}
-                renderOrder={1} // Рисуем надписи самым последним слоем (поверх всего)
+                renderOrder={1} 
               />
             ))}
           </group>
