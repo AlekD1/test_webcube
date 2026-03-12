@@ -50,7 +50,7 @@ export const Model = () => {
 
         // Свечение теперь берем от ОСВЕТЛЕННОГО цвета
         emissive: baseColor, 
-        emissiveIntensity: 0.15,    
+        emissiveIntensity: 0.20,    
         opacity: 0.8,
         transmission: 0.5,          
         thickness: 0.3,             
