@@ -16,29 +16,48 @@ export const Model = () => {
   ], [nodes]);
 
   // Генерируем материал "Литое акриловое стекло с яркими гранями"
+// Генерируем материал "Литое акриловое стекло с яркими гранями"
   const denseGlassMaterials = useMemo(() => {
     return items.map((node) => {
-      // Базовый цвет чуть осветляем для молочности
-      const baseColor = node.material.color.clone().lerp(new Color(0xffffff), 0.15);
+      // 1. Узнаем, какой цвет у текущей детали
+      const hex = node.material.color.getHexString().toUpperCase();
+      
+      // 2. Идентифицируем кубы по цветам
+      const isBlueOrPurple = hex === '6362CB' || node.material.color.b > 0.6;
+      // 🌟 Находим салатовый куб (по HEX или преобладанию зеленого)
+      const isGreen = hex === 'C9FF40' || (node.material.color.g > 0.8 && node.material.color.b < 0.5);
+
+      // 3. МАГИЯ ЦВЕТА: Настраиваем примесь белого для каждого
+      let whiteMix = 0.15; // По умолчанию (для серых/белых)
+      if (isBlueOrPurple) whiteMix = 0.2;
+      if (isGreen) whiteMix = 0.01; // 🌟 ДЛЯ САЛАТОВОГО (было 0.15, сделали 0.25 для осветления)
+
+      const baseColor = node.material.color.clone().lerp(new Color(0xffffff), whiteMix);
+
+      // 4. ГУСТОТА: Настраиваем проницаемость света внутри объема
+      let attenDist = 0.8; // По умолчанию
+      if (isBlueOrPurple) attenDist = 1.8;
+      if (isGreen) attenDist = 1.2; // 🌟 ДЛЯ САЛАТОВОГО (было 0.8, сделали 1.2, чтобы свет глубже проходил)
 
       return new MeshPhysicalMaterial({
         color: baseColor, 
-        roughness: 0.6,             // Снизили шероховатость, чтобы ребра ловили свет лучше
-        metalness: 0.0,             // Убрали металл, он "грязнит" стекло
+        roughness: 0.6,             
+        metalness: 0.2,             
         
-        // --- МАГИЯ ГРАНЕЙ (Яркие ребра) ---
-        clearcoat: 0.01,             // Накидываем жесткий глянец поверх куба
-        clearcoatRoughness: 0.1,    // Глянец должен быть острым, чтобы очертить ребра
-        ior: 1.2,                  // Индекс преломления стекла (создает свечение по краям)
+        clearcoat: 0.01,             
+        clearcoatRoughness: 0.2,    
+        ior: 1.5,                  
 
-        emissive: node.material.color, 
+        // Свечение теперь берем от ОСВЕТЛЕННОГО цвета
+        emissive: baseColor, 
         emissiveIntensity: 0.15,    
-
-        // --- МАГИЯ ОБЪЕМА (Густота цвета) ---
-        transmission: 0.8,          // Полное пропускание света
-        thickness: 0.3,             // Виртуальная толщина куска (было 0.3, делаем массивнее!)
-        attenuationColor: node.material.color, // Каким цветом наливается объем внутри
-        attenuationDistance: 0.8,   // Как быстро сгущается цвет. Чем меньше цифра, тем плотнее края
+        opacity: 0.8,
+        transmission: 0.8,          
+        thickness: 0.3,             
+        
+        // Внутренний объем тоже заливаем ОСВЕТЛЕННЫМ цветом
+        attenuationColor: baseColor, 
+        attenuationDistance: attenDist,   // Синий будет пропускать свет на дистанцию 1.8 (светлее), остальные на 0.8
 
         transparent: true,          
         depthWrite: true,           
