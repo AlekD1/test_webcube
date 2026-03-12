@@ -29,8 +29,8 @@ export const Model = () => {
 
       // 3. МАГИЯ ЦВЕТА: Настраиваем примесь белого для каждого
       let whiteMix = 0.15; // По умолчанию (для серых/белых)
-      if (isBlueOrPurple) whiteMix = 0.2;
-      if (isGreen) whiteMix = 0.01; // 🌟 ДЛЯ САЛАТОВОГО (было 0.15, сделали 0.25 для осветления)
+      if (isBlueOrPurple) whiteMix = 0.1;
+      if (isGreen) whiteMix = -0.04; // 🌟 ДЛЯ САЛАТОВОГО (было 0.15, сделали 0.25 для осветления)
 
       const baseColor = node.material.color.clone().lerp(new Color(0xffffff), whiteMix);
 
@@ -42,7 +42,7 @@ export const Model = () => {
       return new MeshPhysicalMaterial({
         color: baseColor, 
         roughness: 0.6,             
-        metalness: 0.2,             
+        metalness: 0.4,             
         
         clearcoat: 0.01,             
         clearcoatRoughness: 0.2,    
@@ -52,7 +52,7 @@ export const Model = () => {
         emissive: baseColor, 
         emissiveIntensity: 0.15,    
         opacity: 0.8,
-        transmission: 0.8,          
+        transmission: 0.5,          
         thickness: 0.3,             
         
         // Внутренний объем тоже заливаем ОСВЕТЛЕННЫМ цветом
