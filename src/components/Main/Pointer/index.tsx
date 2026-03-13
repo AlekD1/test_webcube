@@ -18,7 +18,7 @@ export const Pointer: FC = () => {
   
   // 🌟 2. МОБИЛКИ (ГИРОСКОП): Чуть-чуть приподняли чувствительность (с 0.03 до 0.035)
   useDeviceOrientationDelta(({ gamma, beta }) => {
-    const strength = 0.035;
+    const strength = 0.025;
     iterateTarget(new Vector3(gamma * strength, beta * strength, 0));
   });
 
