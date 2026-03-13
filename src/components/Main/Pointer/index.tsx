@@ -13,9 +13,12 @@ export const Pointer: FC = () => {
     bodyRef.current?.setNextKinematicTranslation(new Vector3(x * parallax, -y * parallax, 0));
   });
 
-  useMouseMoveDelta(({ x, y }) => iterateTarget(new Vector3(x, y, 0)));
+  // 🌟 1. ПК (МЫШЬ): Увеличили смещение всего на 20% (множитель 1.2)
+  useMouseMoveDelta(({ x, y }) => iterateTarget(new Vector3(x * 1.2, y * 1.2, 0)));
+  
+  // 🌟 2. МОБИЛКИ (ГИРОСКОП): Чуть-чуть приподняли чувствительность (с 0.03 до 0.035)
   useDeviceOrientationDelta(({ gamma, beta }) => {
-    const strength = 0.03;
+    const strength = 0.035;
     iterateTarget(new Vector3(gamma * strength, beta * strength, 0));
   });
 
@@ -27,8 +30,8 @@ export const Pointer: FC = () => {
       collisionGroups={interactionGroups(2, [1])} // Поинтер видит только группу 1 (те, кто не дома)
       ccd={true}
     >
-      {/* Возвращаем спокойные настройки: радиус 0.25 и прыгучесть 0.2 */}
-      <BallCollider args={[0.25]} friction={0} restitution={0.4} />
+      {/* 🌟 3. РАДИУС КОЛЛАЙДЕРА: Сделали шарик буквально на миллиметр толще (с 0.25 до 0.28) */}
+      <BallCollider args={[0.28]} friction={0} restitution={0.4} />
 
       <group rotation={[Math.PI / 6, -Math.PI / 4, 0]}>
         <mesh>

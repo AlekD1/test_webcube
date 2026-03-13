@@ -1,6 +1,7 @@
 import { useGLTF } from '@react-three/drei';
 import { useMemo, useEffect } from 'react';
-import { MeshPhysicalMaterial, DoubleSide, Color, LinearFilter, ClampToEdgeWrapping } from 'three'; 
+// 🌟 ДОБАВИЛИ CanvasTexture и RepeatWrapping
+import { MeshPhysicalMaterial, DoubleSide, Color, LinearFilter, ClampToEdgeWrapping, CanvasTexture, RepeatWrapping } from 'three'; 
 
 import { Modify } from './Modify';
 
@@ -15,56 +16,84 @@ export const Model = () => {
     nodes.Cube_7, nodes.Cube_8, nodes.Cube_9,
   ], [nodes]);
 
-  // Генерируем материал "Литое акриловое стекло с яркими гранями"
-// Генерируем материал "Литое акриловое стекло с яркими гранями"
+  // 🌟 МАГИЯ ПРОГРАММНОЙ ТЕКСТУРЫ (Генератор шума) 🌟
+  const noiseTexture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      // 1. Заливаем фон нейтральным серым
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(0, 0, 512, 512);
+      
+      // 2. Рисуем 150 000 случайных крошечных точек (эффект пескоструя/матового пластика)
+      for (let i = 0; i < 150000; i++) {
+        // Делаем точки либо белыми (бугорки), либо черными (впадинки)
+        ctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
+      }
+    }
+
+    // 3. Превращаем Canvas в текстуру для Three.js
+    const texture = new CanvasTexture(canvas);
+    texture.wrapS = RepeatWrapping;
+    texture.wrapT = RepeatWrapping;
+    texture.repeat.set(2.5, 2.5); // Размножаем текстуру, чтобы зерно было еще мельче
+    return texture;
+  }, []);
+
+  // Генерируем материал
   const denseGlassMaterials = useMemo(() => {
     return items.map((node) => {
-      // 1. Узнаем, какой цвет у текущей детали
       const hex = node.material.color.getHexString().toUpperCase();
       
-      // 2. Идентифицируем кубы по цветам
       const isBlueOrPurple = hex === '6362CB' || node.material.color.b > 0.6;
-      // 🌟 Находим салатовый куб (по HEX или преобладанию зеленого)
       const isGreen = hex === 'C9FF40' || (node.material.color.g > 0.8 && node.material.color.b < 0.5);
 
-      // 3. МАГИЯ ЦВЕТА: Настраиваем примесь белого для каждого
-      let whiteMix = 0.15; // По умолчанию (для серых/белых)
+      let whiteMix = 0.15; 
       if (isBlueOrPurple) whiteMix = 0.1;
-      if (isGreen) whiteMix = -0.04; // 🌟 ДЛЯ САЛАТОВОГО (было 0.15, сделали 0.25 для осветления)
+      if (isGreen) whiteMix = -0.04; 
 
       const baseColor = node.material.color.clone().lerp(new Color(0xffffff), whiteMix);
 
-      // 4. ГУСТОТА: Настраиваем проницаемость света внутри объема
-      let attenDist = 0.8; // По умолчанию
+      let attenDist = 0.8; 
       if (isBlueOrPurple) attenDist = 1.8;
-      if (isGreen) attenDist = 1.2; // 🌟 ДЛЯ САЛАТОВОГО (было 0.8, сделали 1.2, чтобы свет глубже проходил)
+      if (isGreen) attenDist = 1.2; 
 
       return new MeshPhysicalMaterial({
         color: baseColor, 
-        roughness: 0.6,             
+        
+        // 🌟 1. СИЛА РАЗМЫТИЯ (оставляем твою)
+        roughness: 0.6,             // Именно этот параметр замыливает всё внутри. 0.6 даст сильное мыло.
         metalness: 0.4,             
         
         clearcoat: 0.01,             
         clearcoatRoughness: 0.2,    
         ior: 1.5,                  
 
-        // Свечение теперь берем от ОСВЕТЛЕННОГО цвета
         emissive: baseColor, 
         emissiveIntensity: 0.20,    
-        opacity: 0.8,
-        transmission: 0.5,          
-        thickness: 0.3,             
         
-        // Внутренний объем тоже заливаем ОСВЕТЛЕННЫМ цветом
+        // 🌟 2. НАСТРОЙКИ ВНУТРЕННЕГО РАЗМЫТИЯ (Frosted Glass) 🌟
+        opacity: 0.9,               // СТРОГО 1.0! Иначе красивое размытие отключится.
+        transmission: 0.6,         // Пропускаем максимум света внутрь куба (было 0.5)
+        thickness: 1.2,             // Увеличиваем толщину (было 0.3). В толстом слое свет размывается круче!
+        
         attenuationColor: baseColor, 
-        attenuationDistance: attenDist,   // Синий будет пропускать свет на дистанцию 1.8 (светлее), остальные на 0.8
+        attenuationDistance: attenDist,   
 
         transparent: true,          
         depthWrite: true,           
         side: DoubleSide,           
+
+        // Твоя текстура остается на месте
+        bumpMap: noiseTexture, 
+        bumpScale: 0.5, 
       });
     });
-  }, [items]);
+  }, [items, noiseTexture]);
 
   // Защищаем надписи (Plane)
   useEffect(() => {
@@ -107,13 +136,10 @@ export const Model = () => {
             rotation={node.rotation}
             scale={node.scale}
           >
-            {/* 1. ОСНОВНОЙ КУБ */}
             <mesh
               geometry={node.geometry}
               material={denseGlassMaterials[i]}
             />
-
-            {/* 2. ЛОГОТИПЫ И ТЕКСТ */}
             {node.children?.map((child: any) => (
               <mesh
                 key={child.uuid}
