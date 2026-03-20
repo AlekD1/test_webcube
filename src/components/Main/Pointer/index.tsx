@@ -25,7 +25,7 @@ export const Pointer: FC = () => {
     const safeGamma = clamp(gamma, -45, 45);
     const safeBeta = clamp(beta, -45, 45);
     
-    const strength = 0.020;
+    const strength = 0.015;
     iterateTarget(new Vector3(safeGamma * strength, safeBeta * strength, 0));
   });
 
