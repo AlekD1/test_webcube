@@ -35,7 +35,7 @@ export const Main: FC = () => {
 
           return renderer;
         }}
-        camera={{ position: [0, 0, 4.5], fov: 45 }}
+        camera={{ position: [0, 0, 4.9], fov: 45 }}
         frameloop={frameloop}
       >
         <WebGPUPostProcessing />
