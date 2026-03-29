@@ -12,10 +12,9 @@ import { useScreenPositionDelta } from '@/hooks/useScreenPositionDelta';
 import { Model } from './Model';
 import { Pointer } from './Pointer';
 
-// ДОБАВЛЕН ЛИМИТАТОР
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
-// 🌟 ПРАВКА 5: Увеличиваем максимальный угол поворота (амплитуду). Было 0.6, стало 0.9.
+
 const rotation = Math.PI * 0.9;
 
 export const Scene: FC = () => {
@@ -27,7 +26,7 @@ export const Scene: FC = () => {
 
       group.position.set(x, -y, 0);
     },
-    // 🌟 ПРАВКА 4: Делаем движение тяжелым и плавным. Было 0.02, уменьшили на 40% -> 0.012
+    
     0.012,
     0.1,
   );
@@ -38,7 +37,7 @@ export const Scene: FC = () => {
 
       group.rotation.set(y * rotation, x * rotation, z * rotation);
     },
-    // 🌟 ПРАВКА 4: Делаем вращение тяжелым и плавным. Было 0.02, уменьшили на 40% -> 0.012
+
     0.012,
     0.1,
   );
@@ -59,7 +58,7 @@ export const Scene: FC = () => {
   });
 
   useDeviceOrientationDelta(({ gamma, beta }) => {
-    // ПРИМЕНЯЕМ ЛИМИТ: режем углы до 45 градусов
+    
     const safeGamma = clamp(gamma, -45, 45);
     const safeBeta = clamp(beta, -45, 45);
 
@@ -88,9 +87,7 @@ export const Scene: FC = () => {
       <Physics gravity={[0, 0, 0]} colliders="hull">
         <group ref={groupRef} scale={1}>
           
-          {/* 🌟 МАГИЯ ЦЕНТРОВКИ: Добавили группу-обертку. 
-              Второе число (0.5) двигает куб ВВЕРХ по оси Y. 
-              Если нужно выше - ставь 0.8. Если нужно ниже - ставь 0.2 */}
+          {}
           <group position={[0, 0.3, 0]}>
             <Pointer />
             <Model />
