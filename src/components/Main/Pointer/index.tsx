@@ -14,7 +14,7 @@ export const Pointer: FC = () => {
   
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const mouseMultiplier = isMobile ? 0.35 : 0.5;
+  const mouseMultiplier = isMobile ? 0.45 : 0.5;
 
   const { iterateTarget } = useAnimatableVec3(({ x, y }) => {
     bodyRef.current?.setNextKinematicTranslation(new Vector3(x * parallax, -y * parallax, 0));
