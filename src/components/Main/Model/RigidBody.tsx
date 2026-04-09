@@ -9,6 +9,10 @@ export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
 
   const vec = useMemo(() => new Vector3(), []);
 
+  // 🌟 СТРОГИЙ ПОВОДОК: Максимальная дистанция отлета (1 метр)
+  // Если кубики все еще вылезают за экран, уменьши до 0.8 или 0.6
+  const MAX_DISTANCE = 1.0; 
+
   useFrame(() => {
     const body = ref.current;
 
@@ -31,14 +35,28 @@ export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
       // Делаем кубик призраком: он не видит никого (маска [0])
       if (collider) collider.setCollisionGroups(interactionGroups(3, [0]));
 
-      // Плавно тянем в свою точку
-      body.applyImpulse(
-        vec
-          .copy(initialPos.current)
-          .sub(currentPos)
-          .multiplyScalar(0.7),
-        true,
-      );
+      // 🌟 ПРОВЕРКА НА ПОВОДОК
+      if (distance > MAX_DISTANCE) {
+        // Улетел дальше положенного? Прибиваем к невидимой стене поводка
+        vec.copy(currentPos)
+           .sub(initialPos.current)
+           .normalize()
+           .multiplyScalar(MAX_DISTANCE)
+           .add(initialPos.current);
+        
+        body.setTranslation(vec, true);
+        body.setLinvel({ x: 0, y: 0, z: 0 }, true); // Гасим скорость, чтобы не застрял
+      } else {
+        // 🌟 БЫСТРЫЙ ВОЗВРАТ
+        // Тянем домой (увеличили множитель с 0.7 до 0.9 для резкости)
+        body.applyImpulse(
+          vec
+            .copy(initialPos.current)
+            .sub(currentPos)
+            .multiplyScalar(0.9),
+          true,
+        );
+      }
     } else {
       // 🏠 МЫ ДОМА (пришли в точку)
       
@@ -58,8 +76,11 @@ export const ModelRigidBody: FC<PropsWithChildren> = ({ children }) => {
       // 👇 ВЕРНУЛИ ЭТУ СТРОЧКУ, чтобы при спавне они не расталкивали друг друга
       collisionGroups={interactionGroups(1, [2])} 
       lockRotations
-      linearDamping={2}
-      angularDamping={2}
+      
+      // 🌟 ДЕМПФИРОВАНИЕ: оставили небольшим (3), чтобы кубики были быстрыми
+      linearDamping={3}
+      angularDamping={3}
+      
       friction={1}
       colliders="cuboid"
       restitution={0}
